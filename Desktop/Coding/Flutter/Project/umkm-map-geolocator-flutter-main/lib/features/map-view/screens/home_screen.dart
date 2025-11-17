@@ -5,28 +5,16 @@ import 'package:geolocator/geolocator.dart';
 
 // --- OSM/Mapbox Packages ---
 import 'package:flutter_map/flutter_map.dart'; // Widget Peta OSM
-import 'package:latlong2/latlong.dart'
-    as latlng2; // Ganti LatLng dari Google Maps
-
-// --- KONSTANTA DESAIN & API ---
-const Color kPrimaryColor = Color(0xFF1E88E5); // Biru
-const Color kAccentColor = Color(0xFFFFC107); // Kuning/Amber
+import 'package:latlong2/latlong.dart' as latlng2;
+import 'package:umkm_map_geolocater/core/constants/ui_constants.dart';
+import 'package:umkm_map_geolocater/core/models/place_result.dart'; // Ganti LatLng dari Google Maps
 
 // API Key Google tidak digunakan lagi, tapi konstanta tetap ada untuk Geocoding (jika mau)
-const String _googleApiKey = 'AIzaSyButCVSMn70yhIpSRItWpqikgC53QFZO9k';
+// const String _googleApiKey = 'AIzaSyButCVSMn70yhIpSRItWpqikgC53QFZO9k';
 const String _overpassApiUrl = 'https://overpass-api.de/api/interpreter';
 const Duration _searchDelay = Duration(milliseconds: 1000);
 const int _nearbyRadiusMeters = 500; // Radius pencarian UMKM (500 meter)
 const String _nominatimApiUrl = 'https://nominatim.openstreetmap.org/search';
-
-// Model Sederhana untuk Data Lokasi
-class PlaceResult {
-  final String name;
-  final latlng2.LatLng location; // Menggunakan LatLng dari latlong2
-  final double distance; // Jarak dari lokasi pengguna (dalam meter)
-
-  PlaceResult(this.name, this.location, this.distance);
-}
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -65,25 +53,35 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<List<PlaceResult>> _fetchNearbyUmkmFromOverpass(
     latlng2.LatLng userLocation,
   ) async {
-    final lat = userLocation.latitude;
-    final lon = userLocation.longitude;
+    final lat = -6.168309;
+    final lon = 106.726458;
 
     // Overpass Query: Cari node/way/relation dengan tag "shop" atau "amenity=restaurant"
     // dalam radius 500m dari lokasi pengguna.
+    // --- GANTI DENGAN INI ---
+
     final overpassQuery = '''
-      [out:json];
-      (
-        node(around:${_nearbyRadiusMeters},$lat,$lon)[~"shop|amenity"~"shop|restaurant|cafe|bakery|food"];
-      );
-      out center;
-    ''';
+  [out:json][timeout:25]; // Menambahkan batas waktu 25 detik di sisi server
+  (
+    // 1. Ambil semua node yang memiliki tag 'shop' (ini mencakup bakery, supermarket, dll.)
+    node(around:${_nearbyRadiusMeters},$lat,$lon)[shop];
+    
+    // 2. Ambil semua node dengan tag amenity spesifik (restoran, kafe, dll.)
+    node(around:${_nearbyRadiusMeters},$lat,$lon)[amenity~"restaurant|cafe|fast_food|food_court|bar"];
+  );
+  out center;
+''';
+
+    // --- SAMPAI DI SINI ---
 
     try {
-      final response = await http.post(
-        Uri.parse(_overpassApiUrl),
-        body: overpassQuery,
-        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-      );
+      final response = await http
+          .post(
+            Uri.parse(_overpassApiUrl),
+            body: overpassQuery,
+            headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+          )
+          .timeout(const Duration(seconds: 30));
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
@@ -410,10 +408,10 @@ class _HomeScreenState extends State<HomeScreen> {
             initialCenter: _initialPosition,
             initialZoom: 15,
             onPositionChanged: (position, hasGesture) {
-              if (position.center != null && !_isSearching) {
+              if (!_isSearching) {
                 // Update pusat peta ketika pengguna menggeser
                 setState(() {
-                  _currentMapCenter = position.center!;
+                  _currentMapCenter = position.center;
                 });
                 debugPrint(
                   'Lokasi Terpilih (Tengah Peta): ${_currentMapCenter.latitude}, ${_currentMapCenter.longitude}',
