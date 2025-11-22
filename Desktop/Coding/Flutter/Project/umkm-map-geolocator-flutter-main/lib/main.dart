@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:umkm_map_geolocater/view/screen/splash_screen.dart';
+import 'package:umkm_map_geolocater/features/splash-screen/screens/splash_screen.dart';
 
 void main() {
   runApp(const MyApp());

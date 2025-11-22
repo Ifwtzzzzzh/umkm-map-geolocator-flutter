@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:umkm_map_geolocater/view/screen/home_screen.dart';
-
+import 'package:umkm_map_geolocater/features/map-view/screens/home_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -19,8 +18,10 @@ class _SplashScreenState extends State<SplashScreen> {
 
   // Fungsi untuk berpindah halaman (simulasi loading)
   _navigateToHome() async {
-    await Future.delayed(const Duration(milliseconds: 3000), () {}); // Tahan selama 3 detik
-
+    await Future.delayed(
+      const Duration(milliseconds: 3000),
+      () {},
+    ); // Tahan selama 3 detik
 
     Navigator.pushReplacement(
       context,
